@@ -1,0 +1,342 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Neon New Year Countdown</title>
+<style>
+  :root{
+    --bg:#050507;
+    --glass: rgba(255,255,255,0.04);
+    --yellow: #ffea00;
+    --gold:   #ffd700;
+    --green:  #00ff7f;
+    --red:    #ff3860;
+    --white:  #ffffff;
+    --neon-blur: 1.6rem;
+  }
+  html,body{height:100%;margin:0;background:radial-gradient(1000px 600px at 10% 10%, rgba(255,255,0,0.02), transparent 10%), var(--bg); font-family: 'Segoe UI', Roboto, Arial, sans-serif; color:var(--white); -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:20px auto;padding:20px;text-align:center}
+  h1{margin:6px 0 14px;font-size:28px;letter-spacing:2px;color:var(--gold); text-shadow:0 0 18px rgba(255,215,0,0.12)}
+  p.sub{margin:0 0 18px;color:#bdbdbd}
+
+  /* neon row */
+  .row{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:10px 0}
+  .unit{
+    min-width:120px;
+    padding:14px 18px;
+    border-radius:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent 40%);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6), inset 0 -2px 8px rgba(255,255,255,0.02);
+    backdrop-filter: blur(4px);
+    transform: translateZ(0);
+  }
+  .num{
+    font-size:34px;font-weight:800;letter-spacing:1px;margin:0 0 6px;
+    padding:6px 10px;border-radius:8px;display:inline-block;
+    text-shadow: 0 0 12px rgba(255,255,255,0.04);
+  }
+  .label{font-size:12px;color:#dcdcdc;opacity:0.85}
+
+  /* Neon color classes */
+  .c-yellow .num{ color:var(--yellow); box-shadow: 0 0 14px rgba(255,234,0,0.25), 0 0 40px rgba(255,234,0,0.08); border: 1px solid rgba(255,234,0,0.08) }
+  .c-gold   .num{ color:var(--gold);   box-shadow: 0 0 14px rgba(255,215,0,0.25), 0 0 40px rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.08) }
+  .c-green  .num{ color:var(--green);  box-shadow: 0 0 14px rgba(0,255,127,0.20), 0 0 40px rgba(0,255,127,0.06); border: 1px solid rgba(0,255,127,0.06) }
+  .c-red    .num{ color:var(--red);    box-shadow: 0 0 14px rgba(255,56,96,0.22), 0 0 40px rgba(255,56,96,0.06); border: 1px solid rgba(255,56,96,0.06) }
+  .c-white  .num{ color:var(--white);  box-shadow: 0 0 14px rgba(255,255,255,0.18), 0 0 40px rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06) }
+
+  /* fast neon pulse */
+  @keyframes neonPulse {
+    0% { filter: drop-shadow(0 0 6px rgba(255,255,255,0.03)) }
+    50% { filter: drop-shadow(0 0 26px rgba(255,255,255,0.06)) }
+    100% { filter: drop-shadow(0 0 6px rgba(255,255,255,0.03)) }
+  }
+  .num{ animation: neonPulse 800ms ease-in-out infinite }
+
+  /* progress */
+  .progress-wrap{width:90%;max-width:900px;margin:20px auto 28px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,0.6)}
+  .bar{height:18px;border-radius:12px;background:rgba(0,0,0,0.15);overflow:hidden}
+  .bar > i{display:block;height:100%;width:0%;border-radius:12px;background: linear-gradient(90deg, var(--yellow), var(--gold), var(--green), var(--red)); box-shadow:0 0 18px rgba(255,215,0,0.08);transition: width 400ms linear}
+
+  /* celebration text */
+  .celebrate{font-size:42px;margin-top:10px;letter-spacing:2px; text-shadow:0 0 24px rgba(255,255,255,0.08)}
+
+  /* canvas overlay */
+  #fx{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:999}
+
+  /* responsive */
+  @media (max-width:640px){
+    .unit{min-width:100px;padding:10px}
+    .num{font-size:26px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎉 Neon New Year Countdown</h1>
+  <p class="sub">Glowing in: Yellow → Gold → Green → Red → White</p>
+
+  <div class="row" id="unitsRow">
+    <div class="unit c-yellow"><div class="num" id="years">0</div><div class="label">Years</div></div>
+    <div class="unit c-gold"><div class="num" id="weeks">0</div><div class="label">Weeks</div></div>
+    <div class="unit c-green"><div class="num" id="days">0</div><div class="label">Days</div></div>
+    <div class="unit c-red"><div class="num" id="hours">0</div><div class="label">Hours</div></div>
+    <div class="unit c-white"><div class="num" id="minutes">0</div><div class="label">Minutes</div></div>
+    <div class="unit c-yellow"><div class="num" id="seconds">0</div><div class="label">Seconds</div></div>
+    <div class="unit c-gold"><div class="num" id="ms">0</div><div class="label">Milliseconds</div></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="bar"><i id="progressFill"></i></div>
+  </div>
+
+  <div id="celebrateText" class="celebrate" aria-live="polite"></div>
+</div>
+
+<canvas id="fx"></canvas>
+
+<script>
+/* ---------- Canvas setup ---------- */
+const canvas = document.getElementById('fx');
+const ctx = canvas.getContext('2d');
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+addEventListener('resize', resize);
+resize();
+
+/* ---------- Utility ---------- */
+const colors = ['#ffea00','#ffd700','#00ff7f','#ff3860','#ffffff']; // YELLOW GOLD GREEN RED WHITE
+
+function rand(min,max){ return Math.random()*(max-min)+min }
+function choose(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+/* ---------- Fireworks system ---------- */
+let fireworks = [];
+let particles = [];
+let confetti = [];
+
+class Firework {
+  constructor(x,y,tx,ty,color){
+    this.x = x; this.y = y; this.tx = tx; this.ty = ty;
+    this.vx = (tx - x) / rand(20,45); this.vy = (ty - y) / rand(20,45);
+    this.color = color || choose(colors);
+    this.age = 0; this.dead=false;
+  }
+  step(){
+    this.x += this.vx; this.y += this.vy; this.vy += 0.04; // gravity
+    this.age++;
+    const dx = this.tx - this.x, dy = this.ty - this.y;
+    if (Math.hypot(dx,dy) < 8 || this.age>120){
+      this.dead = true;
+      explode(this.x,this.y,this.color);
+    } else {
+      // trail
+      particles.push({x:this.x,y:this.y,life:20,color:this.color,size:2,fade:0.03});
+    }
+  }
+}
+
+function explode(x,y,color){
+  const count = rand(24,80)|0;
+  for (let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = rand(1.8,6.2);
+    particles.push({
+      x,y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      life: 60 + Math.random()*40,
+      color: color || choose(colors),
+      size: 2 + Math.random()*3,
+      decay: 0.96
+    });
+  }
+}
+
+/* ---------- Confetti ---------- */
+function spawnConfettiBurst(x,y){
+  for(let i=0;i<220;i++){
+    confetti.push({
+      x:x + rand(-30,30), y:y + rand(-10,10),
+      vx: rand(-3,3), vy: rand(-6,2),
+      size: rand(4,10),
+      color: choose(colors),
+      rot: rand(0,Math.PI*2), rotSpeed: rand(-0.2,0.2),
+      life: 180 + rand(0,120)
+    });
+  }
+}
+
+/* ---------- render loop ---------- */
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // particles & trails
+  for (let i = particles.length-1; i>=0; i--){
+    const p = particles[i];
+    if (p.life <= 0) { particles.splice(i,1); continue; }
+    if (p.vx !== undefined){
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y, p.size, 0, Math.PI*2);
+      ctx.fill();
+      p.vx *= p.decay; p.vy *= p.decay;
+      p.x += p.vx; p.y += p.vy + 0.04; p.life--;
+      p.size *= 0.998;
+    } else {
+      // trail particles
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x,p.y,2,2);
+      p.life--;
+    }
+  }
+
+  // fireworks
+  for (let i = fireworks.length-1; i>=0; i--){
+    const f = fireworks[i];
+    if (f.dead){ fireworks.splice(i,1); continue; }
+    ctx.fillStyle = f.color;
+    ctx.fillRect(f.x-1,f.y-1,3,3);
+    f.step();
+  }
+
+  // confetti
+  for (let i = confetti.length-1; i>=0; i--){
+    let c = confetti[i];
+    if (c.life <= 0 || c.y > canvas.height+40){ confetti.splice(i,1); continue; }
+    ctx.save();
+    ctx.translate(c.x,c.y);
+    ctx.rotate(c.rot);
+    ctx.fillStyle = c.color;
+    ctx.fillRect(-c.size/2, -c.size/2, c.size, c.size*0.6);
+    ctx.restore();
+    c.vy += 0.08; c.vx *= 0.999;
+    c.x += c.vx; c.y += c.vy; c.rot += c.rotSpeed; c.life--;
+  }
+
+  requestAnimationFrame(render);
+}
+requestAnimationFrame(render);
+
+/* ---------- fire periodically (idle) ---------- */
+let idleTimer = setInterval(()=>{
+  // spawn random fireworks near top half
+  const sx = rand(50, canvas.width-50), tx = rand(100, canvas.width-100);
+  const ty = rand(60, canvas.height*0.5);
+  fireworks.push(new Firework(sx, canvas.height, tx, ty, choose(colors)));
+}, 900 + Math.random()*900);
+
+/* ---------- Countdown logic & DOM updates ---------- */
+const el = {years:document.getElementById('years'), weeks:document.getElementById('weeks'),
+            days:document.getElementById('days'), hours:document.getElementById('hours'),
+            minutes:document.getElementById('minutes'), seconds:document.getElementById('seconds'),
+            ms:document.getElementById('ms'), bar:document.getElementById('progressFill'),
+            celebrate:document.getElementById('celebrateText')};
+
+let targetYear = 2026;
+let running = true;
+
+function startYearCountdown(year){
+  targetYear = year;
+  el.celebrate.textContent = '';
+  // Ensure idle fireworks
+  if (!idleTimer) idleTimer = setInterval(()=>{ fireworks.push(new Firework(rand(50,canvas.width-50), canvas.height, rand(100,canvas.width-100), rand(60,canvas.height*0.45), choose(colors))) }, 900);
+}
+
+// update every ~16ms to include ms
+let ticker = setInterval(()=>{
+  const now = Date.now();
+  const target = new Date(`Jan 1, ${targetYear} 00:00:00`).getTime();
+  const startOfYear = new Date(`Jan 1, ${targetYear-1} 00:00:00`).getTime();
+  let diff = target - now;
+
+  // breakdown
+  const yearsLeft = Math.max(0, targetYear - new Date().getFullYear() - (now >= target ? 0 : 0));
+  const weeks = Math.floor(Math.max(0, diff) / (1000*60*60*24*7));
+  const days = Math.floor((Math.max(0, diff) % (1000*60*60*24*7)) / (1000*60*60*24));
+  const hours = Math.floor((Math.max(0, diff) % (1000*60*60*24)) / (1000*60*60));
+  const minutes = Math.floor((Math.max(0, diff) % (1000*60*60)) / (1000*60));
+  const seconds = Math.floor((Math.max(0, diff) % (1000*60)) / 1000);
+  const ms = Math.floor(Math.max(0, diff) % 1000);
+
+  el.years.textContent = yearsLeft;
+  el.weeks.textContent = weeks;
+  el.days.textContent = days;
+  el.hours.textContent = hours;
+  el.minutes.textContent = minutes;
+  el.seconds.textContent = seconds;
+  el.ms.textContent = ms;
+
+  // progress of the year (0 -> 100)
+  const total = target - startOfYear;
+  const elapsed = now - startOfYear;
+  let pct = (elapsed / total) * 100;
+  if (isNaN(pct)) pct = 0;
+  pct = Math.min(100, Math.max(0, pct));
+  el.bar.style.width = pct + '%';
+
+  // change pulse speed slightly depending on seconds
+  const pulseSpeed = 700 - Math.min(500, seconds*10);
+  document.querySelectorAll('.num').forEach(n => n.style.animationDuration = pulseSpeed + 'ms');
+
+  // If it's time (diff <= 0) -> Celebrate
+  if (diff <= 0 && running){
+    running = false;
+    celebrateNow();
+  }
+}, 16);
+
+/* ---------- Celebration ---------- */
+function celebrateNow(){
+  // stop idle fireworks
+  if (idleTimer){ clearInterval(idleTimer); idleTimer = null; }
+
+  // big bursts
+  for (let i=0;i<9;i++){
+    setTimeout(()=> {
+      for (let j=0;j<5;j++){
+        const sx = rand(canvas.width*0.1, canvas.width*0.9);
+        const tx = rand(canvas.width*0.1, canvas.width*0.9);
+        const ty = rand(canvas.height*0.12, canvas.height*0.45);
+        fireworks.push(new Firework(sx, canvas.height, tx, ty, choose(colors)));
+      }
+    }, i*220);
+  }
+
+  // confetti burst center
+  setTimeout(()=> spawnConfettiBurst(canvas.width/2, canvas.height*0.35), 600);
+
+  // message
+  el.celebrate.textContent = '🎆 HAPPY NEW YEAR 🎆';
+  el.celebrate.style.textShadow = '0 0 28px rgba(255,255,255,0.12)';
+
+  // call repeated smaller bursts
+  let burstCount = 0;
+  const burstInt = setInterval(()=>{
+    for (let i=0;i<6;i++){
+      fireworks.push(new Firework(rand(canvas.width*0.1, canvas.width*0.9), canvas.height, rand(canvas.width*0.12, canvas.width*0.88), rand(canvas.height*0.12, canvas.height*0.4), choose(colors)));
+    }
+    burstCount++;
+    if (burstCount > 10) clearInterval(burstInt);
+  }, 800);
+
+  // after a few seconds, move to next year automatically
+  setTimeout(()=>{
+    // small fade out text and reset
+    el.celebrate.textContent = '';
+    // reset running and start next-year countdown
+    running = true;
+    startYearCountdown(targetYear + 1);
+  }, 8000);
+}
+
+/* ---------- Public helper to start correct target on load ---------- */
+(function init(){
+  const now = new Date();
+  const next = now.getFullYear() + (now.getMonth() > 0 || now.getDate() > 1 || now.getFullYear() < 2026 ? 1 : 1);
+  // We specifically want to start at 2026 if before 2026, otherwise target next year.
+  const desired = (now.getFullYear() < 2026) ? 2026 : now.getFullYear()+1;
+  startYearCountdown(desired);
+})();
+</script>
+</body>
+</html>
