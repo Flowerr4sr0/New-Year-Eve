@@ -338,5 +338,94 @@ function celebrateNow(){
   startYearCountdown(desired);
 })();
 </script>
+  <script>
+/* ===============================
+   SOUND ENGINE (Web Audio API)
+================================ */
+let audioCtx;
+let soundEnabled = false;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    soundEnabled = true;
+  }
+}
+
+document.addEventListener("click", initAudio, { once: true });
+
+function playBeep(freq = 800, dur = 0.05, vol = 0.05) {
+  if (!soundEnabled) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.frequency.value = freq;
+  o.type = "sine";
+  g.gain.value = vol;
+  o.connect(g).connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + dur);
+}
+
+function playPop() {
+  playBeep(1200, 0.08, 0.08);
+}
+
+function playTick() {
+  playBeep(900, 0.03, 0.03);
+}
+
+function playFirework() {
+  playBeep(200, 0.15, 0.1);
+  setTimeout(() => playBeep(1200, 0.2, 0.08), 120);
+}
+
+function playConfetti() {
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => playBeep(600 + i * 120, 0.05, 0.07), i * 80);
+  }
+}
+
+function playNewYear() {
+  let base = 400;
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => playBeep(base + i * 120, 0.18, 0.12), i * 200);
+  }
+}
+
+/* ===============================
+   HOOK INTO COUNTDOWN
+================================ */
+
+// SECOND TICK
+let lastSecond = null;
+
+// Replace / insert inside your countdown update loop:
+function soundTickCheck(seconds) {
+  if (seconds !== lastSecond) {
+    playTick();
+    lastSecond = seconds;
+  }
+}
+
+// GLOW PULSE (fast subtle sound)
+setInterval(() => {
+  playBeep(1500, 0.02, 0.015);
+}, 800);
+
+// FIREWORK SOUND HOOK
+function fireworkSoundHook() {
+  playFirework();
+}
+
+// CONFETTI SOUND HOOK
+function confettiSoundHook() {
+  playConfetti();
+}
+
+// NEW YEAR SOUND
+function newYearSoundHook() {
+  playNewYear();
+}
+                                               </script>
 </body>
 </html>
